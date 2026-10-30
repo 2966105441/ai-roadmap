@@ -1,0 +1,9 @@
+Artificial intelligence is changing how we build software. Large language
+models can write code, answer questions, and summarize long documents. But a
+language model alone does not know your private data. Retrieval augmented
+generation solves this problem. It first searches a knowledge base, then puts
+the retrieved documents into the prompt. The model reads the prompt and answers
+based on the retrieved context. This is why retrieval matters. A good retrieval
+system finds the right documents, and a good prompt tells the model how to use
+them. Most production systems combine retrieval with prompt engineering, and
+the quality of the retrieval often decides the quality of the final answer.
