@@ -1,0 +1,8 @@
+{
+  "name":"小周",
+  "age": 23,
+  "city": "郑州",
+  "knows_python": true,
+  "hobbies": ["写代码","跑步","看论文"],
+  "target_company": "小米"
+}

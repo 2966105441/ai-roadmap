@@ -1,0 +1,5 @@
+{
+  "default_lang": "zh",
+  "top_n": 8,
+  "stop_words_file": "../data/stop_words_zh.txt"
+}
