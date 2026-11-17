@@ -12,7 +12,7 @@ class ContactBook:
 
     #================= 文件读写 ================
     def load(self):
-        if not os.path.exists(self.path):
+        if not os.path.exists(self.path): 
             return
         with open(self.path,encoding = "utf-8-sig",newline="") as f:
             reader = csv.DictReader(f)
@@ -26,14 +26,15 @@ class ContactBook:
             for name, phone in self.contacts.items():
                 writer.writerow({"姓名": name, "电话": phone})
 
-    def add(self,name,phone):
-        self.contacts[name] = phone
-
     def find(self,name):
         return self.contacts.get(name)
 
-    def delete(self,name):
+    def delete(self, name):
+        name = name.strip()
+        if name not in self.contacts:
+            raise ContactError(f"通讯录里没有 {name}")
         del self.contacts[name]
+        self.save()  # 跟 add 一样，改完就落盘
 
     def add(self,name,phone):
         name = name.strip()
@@ -61,6 +62,14 @@ class ContactBook:
             lines.append(f"  {name} {phone}")
         return "\n".join(lines)
 
+    def update(self, name, new_phone):
+        if name not in self.contacts:
+            raise ContactError(f"通讯录里没有 {name}")
+        new_phone = new_phone.strip()
+        if not new_phone.isdigit() or len(new_phone) != 11:
+            raise ContactError(f"电话必须是 11 位数字 ，你给的是 {new_phone!r}")
+        self.contacts[name] = new_phone
+        self.save()
 
 class ContactError(Exception):
     """通讯录专用的异常。所有跟通讯录有关的错误都用它"""
