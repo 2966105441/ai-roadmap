@@ -5,13 +5,13 @@ import os
 class ContactBook:
     """通讯录：数据和操作数据的方法放在一起"""
 
-    def __init__(self,path):
+    def __init__(self,path:str) -> None:
         self.path = path
         self.contacts = {}    #名字->电话
         self.load()           #建对象的时候就把文件读进来
 
     #================= 文件读写 ================
-    def load(self):
+    def load(self) -> None:
         if not os.path.exists(self.path): 
             return
         with open(self.path,encoding = "utf-8-sig",newline="") as f:
@@ -19,24 +19,24 @@ class ContactBook:
             for row in reader:
                 self.contacts[row["姓名"]] = row["电话"]
 
-    def save(self):
+    def save(self) -> None:
         with open(self.path, "w", encoding="utf-8-sig", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=["姓名", "电话"])
             writer.writeheader()
             for name, phone in self.contacts.items():
                 writer.writerow({"姓名": name, "电话": phone})
 
-    def find(self,name):
+    def find(self,name:str) -> str|None:
         return self.contacts.get(name)
 
-    def delete(self, name):
+    def delete(self, name:str) -> None:
         name = name.strip()
         if name not in self.contacts:
             raise ContactError(f"通讯录里没有 {name}")
         del self.contacts[name]
         self.save()  # 跟 add 一样，改完就落盘
 
-    def add(self,name,phone):
+    def add(self,name:str,phone:str) -> None:
         name = name.strip()
         phone = phone.strip()
         if not name:
@@ -48,10 +48,10 @@ class ContactBook:
         self.contacts[name] = phone
         self.save()          #改为立马落盘，不会忘
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.contacts)
 
-    def __contains__(self,name):
+    def __contains__(self,name:str) -> bool:
         return name in self.contacts
 
     def __str__(self):
@@ -62,7 +62,7 @@ class ContactBook:
             lines.append(f"  {name} {phone}")
         return "\n".join(lines)
 
-    def update(self, name, new_phone):
+    def update(self, name:str, new_phone:str) -> None:
         if name not in self.contacts:
             raise ContactError(f"通讯录里没有 {name}")
         new_phone = new_phone.strip()
