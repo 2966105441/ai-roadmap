@@ -2,3 +2,10 @@
 .idea/
 __pycache__/
 *.pyc
+
+# 本机配置与密钥，绝对不能进仓库
+.env
+
+# 日志文件
+logs/
+*.log
