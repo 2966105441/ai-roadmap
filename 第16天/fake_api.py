@@ -59,12 +59,35 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(404, {"error": "没有这个地址", "path": self.path})
 
+    def _stream(self, text):
+        """流式出口：不算总长度，写完一句立刻发一句（Day 028 加的）"""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.end_headers()
+        for ch in text:                         # 一个字发一次
+            chunk = {"id": "chat-001",
+                     "choices": [{"index": 0, "delta": {"content": ch}}]}
+            self.wfile.write(("data: " + json.dumps(chunk, ensure_ascii=False) + "\n\n").encode("utf-8"))
+            self.wfile.flush()                  # 不 flush 就攒着不出去
+            time.sleep(0.05)
+        self.wfile.write(b"data: [DONE]\n\n")
+        self.wfile.flush()
+
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         raw = self.rfile.read(length).decode("utf-8")
         print(f"  <- POST {self.path}   收到：{raw}", flush=True)
 
-        if self.path == "/chat":
+        if self.path == "/chat_stream":
+            data = json.loads(raw or "{}")
+            msgs = data.get("messages") or [{"role": "user", "content": data.get("prompt", "")}]
+            last = ""
+            for m in msgs:
+                if m.get("role") == "user":
+                    last = m.get("content", "")
+            self._stream(f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。这是流式回复。")
+
+        elif self.path == "/chat":
             data = json.loads(raw or "{}")
             msgs = data.get("messages")         # 新版请求：一串带角色的消息
             if msgs:
