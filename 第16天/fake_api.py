@@ -66,19 +66,30 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/chat":
             data = json.loads(raw or "{}")
-            prompt = data.get("prompt", "")
+            msgs = data.get("messages")         # 新版请求：一串带角色的消息
+            if msgs:
+                last = ""
+                for m in msgs:                  # 取最后一条 user 说的话
+                    if m.get("role") == "user":
+                        last = m.get("content", "")
+                chars = sum(len(m.get("content", "")) for m in msgs)
+                reply = f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。"
+            else:                               # 老版请求：只有一个 prompt
+                last = data.get("prompt", "")
+                chars = len(last)
+                reply = f"你问的是「{last}」。"
             self._send(200, {
                 "id": "chat-001",
                 "model": "fake-mimo",
                 "choices": [{
                     "index": 0,
                     "message": {"role": "assistant",
-                                "content": f"你问的是「{prompt}」。这是一条假回复。"},
+                                "content": reply + "这是一条假回复。"},
                     "finish_reason": "stop",
                 }],
-                "usage": {"prompt_tokens": len(prompt),
+                "usage": {"prompt_tokens": chars,
                           "completion_tokens": 12,
-                          "total_tokens": len(prompt) + 12},
+                          "total_tokens": chars + 12},
             })
         else:
             self._send(404, {"error": "没有这个地址"})

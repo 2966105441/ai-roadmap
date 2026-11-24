@@ -1,0 +1,25 @@
+"""02.py —— 再加上 /clear：把历史清空重来"""
+import argparse
+
+from chat import ChatSession
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--session", default="default")
+args = parser.parse_args()
+
+s = ChatSession(args.session + ".json")
+print(f"（会话 {args.session}｜输入 /help 看命令）\n")
+
+while True:
+    text = input("你：")
+
+    if text == "/quit":
+        break
+    elif text == "/clear":
+        s.reset()
+        print("  已清空\n")
+    elif text == "/help":
+        print("  /clear 清空   /help 帮助   /quit 退出\n")
+    elif text.strip():
+        print("它：", s.send(text))
+        print()

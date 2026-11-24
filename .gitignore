@@ -9,3 +9,9 @@ __pycache__/
 # 日志文件
 logs/
 *.log
+
+# 程序跑出来的会话文件（Day 024 起）
+chat*.json
+# Day 026 起：会话存档按 --session 命名（work.json / a.json / me.json …）
+# 都是跑一次生成一份的运行产物，不进仓库
+第2[0-9]天/*.json

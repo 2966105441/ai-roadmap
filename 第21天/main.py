@@ -20,6 +20,6 @@ def main() -> None:
     for i, ln in enumerate(lines[:top], 1):
         print(f"{i}. {ln[:24]}")
 
-
+ 
 if __name__ == "__main__":
     main()
