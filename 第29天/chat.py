@@ -33,10 +33,6 @@ class ChatSession:
         del self.history[1:]
         self.save()
 
-    def trim(self) -> None:
-        """太长了就删掉最早的一问一答，system 永远保住"""
-        while len(self.history) > MAX_MSGS:
-            del self.history[1:3]
 
     def send(self, text: str) -> str:
         self.history.append({"role": "user", "content": text})

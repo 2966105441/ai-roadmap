@@ -4,11 +4,26 @@
 先运行这个文件，它会在你电脑上开一个「网站」，然后你再运行别的脚本去请求它。
 """
 import json
+import math
+import random
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = 8000
 flaky_n = {"n": 0}          # /flaky 被请求了几次
+
+# 回复的结尾可以从这五个里挑，分数是「模型」给它们打的分（Day 030 加的）
+PHRASES = ["这个我懂。", "嗯……让我想想。", "不太确定，但我觉得能行。", "别问了，先动手。"]
+PHRASE_LOGITS = [3.0, 2.0, 1.2, 0.6]
+
+
+def pick_phrase(temperature):
+    """按温度从候选结尾里抽一个：温度低就总挑分最高的，温度高就谁都可能"""
+    t = float(temperature)
+    if t <= 0.05:                                   # 温度趋近 0：直接拿最高分
+        return PHRASES[PHRASE_LOGITS.index(max(PHRASE_LOGITS))]
+    exps = [math.exp(x / t) for x in PHRASE_LOGITS]  # 温度越小，分差被放大得越狠
+    return random.choices(PHRASES, weights=exps)[0]
 
 # 这份数据就是你 Day 011 / Day 015 真跑出来的结果，不是编的
 STATS = {
@@ -85,10 +100,12 @@ class Handler(BaseHTTPRequestHandler):
             for m in msgs:
                 if m.get("role") == "user":
                     last = m.get("content", "")
-            self._stream(f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。这是流式回复。")
+            phrase = pick_phrase(data.get("temperature", 0.7))
+            self._stream(f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{phrase}")
 
         elif self.path == "/chat":
             data = json.loads(raw or "{}")
+            phrase = pick_phrase(data.get("temperature", 0.7))
             msgs = data.get("messages")         # 新版请求：一串带角色的消息
             if msgs:
                 last = ""
@@ -96,18 +113,17 @@ class Handler(BaseHTTPRequestHandler):
                     if m.get("role") == "user":
                         last = m.get("content", "")
                 chars = sum(len(m.get("content", "")) for m in msgs)
-                reply = f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。"
+                reply = f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{phrase}"
             else:                               # 老版请求：只有一个 prompt
                 last = data.get("prompt", "")
                 chars = len(last)
-                reply = f"你问的是「{last}」。"
+                reply = f"你问的是「{last}」。{phrase}"
             self._send(200, {
                 "id": "chat-001",
                 "model": "fake-mimo",
                 "choices": [{
                     "index": 0,
-                    "message": {"role": "assistant",
-                                "content": reply + "这是一条假回复。"},
+                    "message": {"role": "assistant", "content": reply},
                     "finish_reason": "stop",
                 }],
                 "usage": {"prompt_tokens": chars,
