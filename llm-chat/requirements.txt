@@ -1,0 +1,3 @@
+# 运行前装好这些：pip install -r requirements.txt
+# 只要这一条 —— 假接口用的是 Python 标准库，不需要额外装东西
+requests==2.34.2

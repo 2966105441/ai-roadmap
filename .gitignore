@@ -15,3 +15,5 @@ chat*.json
 # Day 026 起：会话存档按 --session 命名（work.json / a.json / me.json …）
 # 都是跑一次生成一份的运行产物，不进仓库
 第[23][0-9]天/*.json
+# Day 031 起：llm-chat 里 --session 生成的存档也全是运行产物
+llm-chat/*.json
