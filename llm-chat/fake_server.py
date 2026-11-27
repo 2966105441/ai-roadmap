@@ -29,6 +29,17 @@ def pick_phrase(temperature):
 
 SCOPE_KEY = "只回答包含以下关键词的问题："     # system 里写了这行，就按关键词判断
 
+WRAP_N = {"n": 0}          # /extract 被请求了几次，用来轮流模拟模型的三种坏习惯
+
+
+def guess_due(text):
+    """假接口版的「抽取」：认出几个词就给日期，认不出就说待定（Day 033 加的）"""
+    for key, due in [("明天", "2026-11-28"), ("下周", "2026-12-04")]:
+        if key in text:
+            return due
+    return "待定"
+
+
 
 def read_system(msgs):
     """取第一条 system 的内容，没有就返回空串"""
@@ -125,6 +136,22 @@ class Handler(BaseHTTPRequestHandler):
             phrase = pick_phrase(data.get("temperature", 0.7))
             tail = "这个问题不在我能回答的范围内。" if out_of_scope(msgs, last) else phrase
             self._stream(f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{tail}")
+
+        elif self.path == "/extract":
+            data = json.loads(raw or "{}")
+            text = data.get("text", "")
+            item = {"title": text, "due": guess_due(text), "done": False}
+            body = json.dumps(item, ensure_ascii=False)
+            WRAP_N["n"] += 1
+            pre = ["好的，我提取到：\n", "", "```json\n"][WRAP_N["n"] % 3]   # 开场白 / 干净 / 代码块
+            content = pre + body + ("```" if "```" in pre else "")
+            self._send(200, {
+                "id": "chat-002",
+                "model": "fake-mimo",
+                "choices": [{"index": 0,
+                             "message": {"role": "assistant", "content": content},
+                             "finish_reason": "stop"}],
+            })
 
         elif self.path == "/chat":
             data = json.loads(raw or "{}")

@@ -61,25 +61,28 @@ python main.py
 | `--session work` | 会话名，存档成 `work.json`。不写就是 `chat.json` |
 | `--plain` | 不用流式，等整句回来再打 |
 
-## 三个文件
+## 几个文件
 
 | 文件 | 干什么 |
 | --- | --- |
 | `main.py` | 命令行入口：解析参数、读 system prompt、`while` 循环读输入、把 `/` 开头的命令拦下来 |
-| `client.py` | `ChatSession` 类：管历史、管存档、自动截断、带温度发请求 |
-| `fake_server.py` | 本地假接口。聊天只用 `/chat` 和 `/chat_stream`，其余端点是早期练手留下的 |
+| `client.py` | `ChatSession` 类：管历史、管存档、自动截断、带温度发请求；末尾的 `parse_json()` / `extract()` 负责把模型吐的 JSON 洗干净 |
+| `fake_server.py` | 本地假接口。聊天只用 `/chat` 和 `/chat_stream`，`/extract` 用来演示「让模型输出结构化数据」 |
 | `prompts/` | 一个文件一个角色。`tutor.txt` 只答 Python 问题，`reviewer.txt` 只挑代码毛病，`vague.txt` 是空白对照 |
 | `01.py` | 实验脚本：同一个问题、两个 system prompt，各问一次看差别 |
+| `02.py` | 实验脚本：连抽三次，看模型怎么用 `` ```json `` 和开场白把 `json.loads` 弄炸 |
+| `03.py` | 一句话变一条数据，攒成 `notes.json` |
 
 ## 限制
 
 - 假接口的回复是模板，**不是真模型**。它只会告诉你「你发了几条消息」+ 按温度抽一句话
+- `/extract` 的「抽取」是查关键词表（`明天`/`下周` → 日期），不是真理解。但它会**故意**轮流用三种格式回你：干净、套 ```` ```json ````、带开场白——真模型也这样，`parse_json()` 就是为这个写的
 - 要接真模型：把 `client.py` 顶上那两行 `URL` 换成真地址，请求头加 `Authorization: Bearer <你的 Key>`，再删掉 `os.environ["NO_PROXY"]` 那一行
 - 历史存成 JSON 文件，扛不住并发。真产品用数据库
 
 ## 学到的东西都在这
 
-这 9 个文件不是一次写成的，是 Day 22 到 Day 32 一天加一块拼出来的：
+这 11 个文件不是一次写成的，是 Day 22 到 Day 33 一天加一块拼出来的：
 
 | 天 | 加了什么 |
 | --- | --- |
@@ -94,3 +97,4 @@ python main.py
 | Day 30 | 温度：`exp(分/温度)` 再按权重抽签 |
 | Day 31 | 收进一个仓库：改名、写 README、写 `requirements.txt` |
 | Day 32 | system prompt 搬进文件，`--role` 切角色 |
+| Day 33 | 让模型吐 JSON：`parse_json()` 切出 `{` 到 `}` 之间那段，`extract()` 一句话变一条待办 |
