@@ -28,7 +28,7 @@ python main.py
 ## 会看到什么
 
 ```
-（会话 chat｜温度 0.7｜流式回复）
+（会话 chat｜角色 tutor｜温度 0.7｜流式）
 
 你：你好
 它：你这次发了 2 条消息，最后一句是「你好」。这个我懂。
@@ -56,6 +56,7 @@ python main.py
 
 | 参数 | 作用 |
 | --- | --- |
+| `--role tutor` | 用 `prompts/` 里哪个文件当 system prompt。可选 `tutor` / `reviewer` / `vague` |
 | `--temp 0.7` | 温度。0 = 每次答案一样，2 = 每次都不一样 |
 | `--session work` | 会话名，存档成 `work.json`。不写就是 `chat.json` |
 | `--plain` | 不用流式，等整句回来再打 |
@@ -64,9 +65,11 @@ python main.py
 
 | 文件 | 干什么 |
 | --- | --- |
-| `main.py` | 命令行入口：解析参数、`while` 循环读输入、把 `/` 开头的命令拦下来 |
+| `main.py` | 命令行入口：解析参数、读 system prompt、`while` 循环读输入、把 `/` 开头的命令拦下来 |
 | `client.py` | `ChatSession` 类：管历史、管存档、自动截断、带温度发请求 |
 | `fake_server.py` | 本地假接口。聊天只用 `/chat` 和 `/chat_stream`，其余端点是早期练手留下的 |
+| `prompts/` | 一个文件一个角色。`tutor.txt` 只答 Python 问题，`reviewer.txt` 只挑代码毛病，`vague.txt` 是空白对照 |
+| `01.py` | 实验脚本：同一个问题、两个 system prompt，各问一次看差别 |
 
 ## 限制
 
@@ -76,7 +79,7 @@ python main.py
 
 ## 学到的东西都在这
 
-这 8 个文件不是一次写成的，是 Day 22 到 Day 30 一天加一块拼出来的：
+这 9 个文件不是一次写成的，是 Day 22 到 Day 32 一天加一块拼出来的：
 
 | 天 | 加了什么 |
 | --- | --- |
@@ -89,3 +92,5 @@ python main.py
 | Day 28 | 流式：`stream=True` + `iter_lines`，首字延迟 1.4s → 0.05s |
 | Day 29 | 自动截断：超 7 条删最早的一问一答，`system` 永不动 |
 | Day 30 | 温度：`exp(分/温度)` 再按权重抽签 |
+| Day 31 | 收进一个仓库：改名、写 README、写 `requirements.txt` |
+| Day 32 | system prompt 搬进文件，`--role` 切角色 |

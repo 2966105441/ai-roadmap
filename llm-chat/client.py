@@ -18,13 +18,22 @@ MAX_MSGS = 7                       # system + 3 轮对话（每轮 2 条）
 
 
 class ChatSession:
-    def __init__(self, file: str, temperature: float = 0.7):
+    def __init__(self, file: str, temperature: float = 0.7,
+                 system: str = "你是一个简洁的助手。"):
         self.file = file
         self.temperature = temperature
-        self.history = [{"role": "system", "content": "你是一个简洁的助手。"}]
+        self.history = [{"role": "system", "content": system}]
         if os.path.exists(file):
             with open(file, encoding="utf-8") as f:
                 self.history = json.load(f)
+                if self.history and self.history[0].get("role") == "system":
+                    self.history[0]["content"] = system  # 存档里的 system 可能过时了
+                else:
+                    self.history.insert(0, {"role": "system", "content": system})
+        if self.history and self.history[0].get("role") == "system":
+            self.history[0]["content"] = system      # 存档里的 system 可能过时了
+        else:
+            self.history.insert(0, {"role": "system", "content": system})
 
     def save(self) -> None:
         with open(self.file, "w", encoding="utf-8") as f:

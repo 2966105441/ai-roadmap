@@ -3,18 +3,24 @@
 先另开一个终端跑 fake_server.py，再跑这个。
 """
 import argparse
+import os
 
 from client import ChatSession
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--session", default="chat")
 parser.add_argument("--plain", action="store_true")
 parser.add_argument("--temp", type=float, default=0.7)
+parser.add_argument("--role", default="tutor")
 args = parser.parse_args()
 
-s = ChatSession(args.session + ".json", args.temp)
+with open(os.path.join(HERE, "prompts", args.role + ".txt"), encoding="utf-8") as f:
+    system = f.read()
+s = ChatSession(args.session + ".json", args.temp, system)
 mode = "非流式" if args.plain else "流式"
-print(f"（会话 {args.session}｜温度 {args.temp}｜{mode}）\n")
+print(f"（会话 {args.session}｜角色 {args.role}｜温度 {args.temp}｜{mode}）\n")
 
 while True:
     text = input("你：")

@@ -3,6 +3,7 @@
 不需要联网，不需要 API Key。先跑这个，再另开终端跑 main.py。
 聊天只用到 /chat 和 /chat_stream 两个端点；
 /hello /stats.json /slow /flaky 是早期练 requests 时加的，留着不影响。
+system 里写了「只回答包含以下关键词的问题：」就会按关键词拒答（Day 032 加的）。
 """
 import json
 import math
@@ -25,6 +26,26 @@ def pick_phrase(temperature):
         return PHRASES[PHRASE_LOGITS.index(max(PHRASE_LOGITS))]
     exps = [math.exp(x / t) for x in PHRASE_LOGITS]  # 温度越小，分差被放大得越狠
     return random.choices(PHRASES, weights=exps)[0]
+
+SCOPE_KEY = "只回答包含以下关键词的问题："     # system 里写了这行，就按关键词判断
+
+
+def read_system(msgs):
+    """取第一条 system 的内容，没有就返回空串"""
+    for m in msgs:
+        if m.get("role") == "system":
+            return m.get("content", "")
+    return ""
+
+
+def out_of_scope(msgs, text):
+    """system 写了关键词约束、而这句话一个都没命中 → 该拒答（Day 032 加的）"""
+    system = read_system(msgs)
+    if SCOPE_KEY not in system:
+        return False                                # 没写这条约束就不管
+    line = system.split(SCOPE_KEY, 1)[1].split("\n", 1)[0]
+    words = [w.strip() for w in line.replace("、", ",").split(",") if w.strip()]
+    return not any(w.lower() in text.lower() for w in words)
 
 # 这份数据就是你 Day 011 / Day 015 真跑出来的结果，不是编的
 STATS = {
@@ -102,7 +123,8 @@ class Handler(BaseHTTPRequestHandler):
                 if m.get("role") == "user":
                     last = m.get("content", "")
             phrase = pick_phrase(data.get("temperature", 0.7))
-            self._stream(f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{phrase}")
+            tail = "这个问题不在我能回答的范围内。" if out_of_scope(msgs, last) else phrase
+            self._stream(f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{tail}")
 
         elif self.path == "/chat":
             data = json.loads(raw or "{}")
@@ -114,7 +136,8 @@ class Handler(BaseHTTPRequestHandler):
                     if m.get("role") == "user":
                         last = m.get("content", "")
                 chars = sum(len(m.get("content", "")) for m in msgs)
-                reply = f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{phrase}"
+                tail = "这个问题不在我能回答的范围内。" if out_of_scope(msgs, last) else phrase
+                reply = f"你这次发了 {len(msgs)} 条消息，最后一句是「{last}」。{tail}"
             else:                               # 老版请求：只有一个 prompt
                 last = data.get("prompt", "")
                 chars = len(last)
